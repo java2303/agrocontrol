@@ -1,0 +1,330 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+
+  --primary: #012d1d;                    /* Deep moss green - authority, depth */
+  --primary-container: #0a5c3a;          /* Container variant */
+  --primary-fixed-dim: #1a4d3a;          /* Inactive sensor states */
+  
+  --secondary: #4b616e;                  /* Earthy Slate - data viz, secondary actions */
+  --secondary-container: #6b818e;
+  
+  --tertiary: #b2d414;                   /* Vibrant Lime - status, active states, vital "Go" */
+  --tertiary-container: #012d1d;         /* Dark container for lime text */
+  --tertiary-fixed: #c4e817;             /* Attention Required states */
+  --tertiary-fixed-dim: #9fc012;         /* Dim lime variant */
+  
+  /* Surface Hierarchy - Tonal Layering */
+  --background: #f4fafd;                 /* Canvas */
+  --surface: #f4fafd;                    /* Base surface */
+  --surface-container-low: #eef5f7;      /* Large structural sections */
+  --surface-container: #e8eff1;          /* Mid-level containers */
+  --surface-container-high: #e2e9eb;     /* Input backgrounds */
+  --surface-container-highest: #dce3e5;  /* Highest elevation inputs */
+  --surface-container-lowest: #ffffff;   /* Top layer - interactive cards, inputs */
+  
+  /* On-Surface Colors */
+  --on-surface: #161d1f;                 /* Primary text - NEVER pure black */
+  --on-surface-variant: #4b616e;         /* Secondary text */
+  --on-primary: #f4fafd;                 /* Text on primary */
+  --on-tertiary-fixed: #012d1d;          /* Dark text on lime */
+  
+  /* Status Colors */
+  --success: #22c55e;
+  --success-container: #dcfce7;
+  --warning: #eab308;
+  --warning-container: #fef9c3;
+  --error: #dc2626;
+  --error-container: #fee2e2;
+  --on-error-container: #991b1b;
+  
+  /* Outline - Ghost Borders */
+  --outline: rgba(22, 29, 31, 0.15);     /* 15% on-surface for ghost borders */
+  --outline-variant: rgba(22, 29, 31, 0.08);
+  
+  /* Mapped to shadcn tokens */
+  --foreground: var(--on-surface);
+  --card: var(--surface-container-lowest);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-lowest);
+  --popover-foreground: var(--on-surface);
+  --primary-foreground: var(--on-primary);
+  --secondary-foreground: #f4fafd;
+  --muted: var(--surface-container-low);
+  --muted-foreground: var(--on-surface-variant);
+  --accent: var(--tertiary);
+  --accent-foreground: var(--on-tertiary-fixed);
+  --destructive: var(--error);
+  --destructive-foreground: #ffffff;
+  --border: var(--outline-variant);
+  --input: var(--surface-container-highest);
+  --ring: var(--tertiary);
+  
+  /* Charts */
+  --chart-1: var(--tertiary);
+  --chart-2: var(--secondary);
+  --chart-3: var(--primary);
+  --chart-4: var(--success);
+  --chart-5: #86efac;
+  
+  /* Shape */
+  --radius: 0.75rem;                     /* md = 12px for cards */
+  --radius-sm: 0.25rem;                  /* sm = 4px for chips */
+  --radius-xl: 1.5rem;                   /* xl = 24px for primary buttons */
+  
+  /* Sidebar - Dark variant */
+  --sidebar: var(--primary);
+  --sidebar-foreground: #f4fafd;
+  --sidebar-primary: var(--tertiary);
+  --sidebar-primary-foreground: var(--on-tertiary-fixed);
+  --sidebar-accent: rgba(178, 212, 20, 0.12);
+  --sidebar-accent-foreground: #f4fafd;
+  --sidebar-border: rgba(178, 212, 20, 0.15);
+  --sidebar-ring: var(--tertiary);
+  
+  /* Shadows - Ambient only, never pure black */
+  --shadow-ambient: 0 12px 40px rgba(22, 29, 31, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(22, 29, 31, 0.08);
+}
+
+.dark {
+  --background: var(--primary);
+  --surface: var(--primary);
+  --surface-container-low: #022b1c;
+  --surface-container: #0a3d2a;
+  --surface-container-high: #0f4d36;
+  --surface-container-highest: #145d42;
+  --surface-container-lowest: #1a6b4d;
+  
+  --on-surface: #f4fafd;
+  --on-surface-variant: #a8c4b8;
+  
+  --foreground: var(--on-surface);
+  --card: var(--surface-container);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container);
+  --popover-foreground: var(--on-surface);
+  --muted: var(--surface-container-low);
+  --muted-foreground: var(--on-surface-variant);
+  
+  --outline: rgba(178, 212, 20, 0.15);
+  --outline-variant: rgba(178, 212, 20, 0.08);
+  --border: var(--outline-variant);
+  --input: var(--surface-container-high);
+  
+  --sidebar: #011a11;
+  --sidebar-border: rgba(178, 212, 20, 0.12);
+}
+
+@theme inline {
+  /* Typography: Editorial Scale */
+  --font-sans: 'Inter', 'Inter Fallback', sans-serif;
+  --font-display: 'Manrope', 'Manrope Fallback', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  
+  /* Color tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  
+  /* Radius */
+  --radius-sm: var(--radius-sm);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius-xl);
+  
+  /* Sidebar colors */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Surface hierarchy */
+  --color-surface: var(--surface);
+  --color-surface-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-high: var(--surface-container-high);
+  --color-surface-highest: var(--surface-container-highest);
+  --color-surface-lowest: var(--surface-container-lowest);
+  
+  /* Semantic colors */
+  --color-tertiary: var(--tertiary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
+  
+  /* Editorial Typography Scale */
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  
+  /* Display - Big Data hero numbers */
+  .text-display-lg {
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  
+  .text-display-md {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  
+  /* Headline */
+  .text-headline {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism - Surface container lowest at 80% with 24px blur */
+  .glass {
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+  
+  .glass-dark {
+    background: rgba(1, 45, 29, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+  
+  /* Ambient Shadow - Natural light feel */
+  .shadow-ambient {
+    box-shadow: var(--shadow-ambient);
+  }
+  
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  
+  /* Surface backgrounds */
+  .bg-surface { background-color: var(--surface); }
+  .bg-surface-low { background-color: var(--surface-container-low); }
+  .bg-surface-container { background-color: var(--surface-container); }
+  .bg-surface-high { background-color: var(--surface-container-high); }
+  .bg-surface-highest { background-color: var(--surface-container-highest); }
+  .bg-surface-lowest { background-color: var(--surface-container-lowest); }
+  
+  /* Text colors */
+  .text-on-surface { color: var(--on-surface); }
+  .text-on-surface-variant { color: var(--on-surface-variant); }
+  
+  /* Status chip backgrounds */
+  .bg-tertiary-container { background-color: var(--tertiary-container); }
+  .bg-error-container { background-color: var(--error-container); }
+  .bg-success-container { background-color: var(--success-container); }
+  .bg-warning-container { background-color: var(--warning-container); }
+  
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Pulse animation for sensors */
+  @keyframes sensor-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(1.02);
+    }
+  }
+  
+  .sensor-pulse {
+    animation: sensor-pulse 2.5s ease-in-out infinite;
+  }
+  
+  /* Button gradient for hero states */
+  .btn-gradient {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  }
+}
+
+/* Custom scrollbar - subtle */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--outline);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 29, 31, 0.25);
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
