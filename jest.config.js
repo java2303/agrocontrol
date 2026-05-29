@@ -12,8 +12,8 @@ const customJestConfig = {
   // Esto es vital para que SonarCloud encuentre los archivos en la ruta correcta
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
+    'backend/src/**/*.{js,jsx,ts,tsx}',
+    '!backend/src/**/*.d.ts',
   ],
 }
 
