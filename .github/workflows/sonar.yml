@@ -11,6 +11,11 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: desarrollo
+
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v3
@@ -22,6 +27,7 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+          cache-dependency-path: desarrollo/package-lock.json
 
       - name: Instalar dependencias
         run: npm install
@@ -29,6 +35,7 @@ jobs:
       - name: Ejecutar Pruebas y Generar Cobertura
         run: npm run test  
 
+      # ─── SECCIÓN CORREGIDA ───
       - name: Enviar datos a SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
         env:
