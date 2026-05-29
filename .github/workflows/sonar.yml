@@ -11,10 +11,6 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: desarrollo
 
     steps:
       - name: Clonar repositorio
@@ -33,11 +29,8 @@ jobs:
       - name: Ejecutar Pruebas y Generar Cobertura
         run: npm run test  
 
-      # ─── SINCRONIZACIÓN ESTRUCTURAL DIRECTA ───
       - name: Enviar datos a SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
-        with:
-          projectBaseDir: desarrollo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
