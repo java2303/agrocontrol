@@ -12,7 +12,6 @@ jobs:
     name: SonarCloud
     runs-on: ubuntu-latest
     
-    # Obliga a GitHub a ejecutar los comandos dentro de la carpeta backend
     defaults:
       run:
         working-directory: backend
@@ -28,13 +27,14 @@ jobs:
         with:
           node-version: 18
 
+      # ─── INSTALACIÓN DE DESARROLLO FORZADA ───
       - name: Instalar dependencias
-        run: npm install
+        run: npm install --include=dev
 
+      # ─── EJECUCIÓN UNITARIA COMPATIBLE CON CI ───
       - name: Ejecutar Pruebas y Generar Cobertura
-        run: npm run test  
+        run: npx jest --coverage
 
-      # Envía los datos usando la raíz general para que lea el properties
       - name: Enviar datos a SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
         env:
