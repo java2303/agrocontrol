@@ -62,7 +62,9 @@ const obtenerParcelas = async (req, res) => {
                 nombre, 
                 ubicacion_nombre, 
                 tipo_cultivo_id AS "cropType", 
-                area_hectareas AS area
+                area_hectareas AS area,
+                fecha_creacion AS "createdAt",
+                ST_AsGeoJSON(geom) AS geom
             FROM parcelas
             WHERE usuario_id = $1
             ORDER BY nombre ASC;

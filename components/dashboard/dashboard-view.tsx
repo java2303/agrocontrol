@@ -14,43 +14,168 @@ interface SensorMetric {
 }
 
 export function DashboardView() {
-  const { state, navigate } = useApp()
+  const { state, navigate, setParcels } = useApp()
   const [metrics, setMetrics] = useState<SensorMetric[]>([
     { label: 'Humedad del Suelo', value: 68, unit: '%', icon: 'water_drop', status: 'optimo' },
     { label: 'Temperatura', value: 24, unit: '°C', icon: 'thermostat', status: 'optimo' },
     { label: 'Índice de Salud', value: 85, unit: '%', icon: 'local_florist', status: 'optimo' },
     { label: 'Estado Sistema', value: 100, unit: '%', icon: 'memory', status: 'optimo' },
   ])
+  const [recommendations, setRecommendations] = useState<any[]>([
+    { text: 'Calculando sugerencias del CIAT...', icon: 'psychology', priority: 'info' },
+    { text: 'Monitoreando telemetría de suelo...', icon: 'eco', priority: 'success' },
+    { text: 'Analizando nutrientes y humedad...', icon: 'info', priority: 'info' },
+  ])
+  const [chatQuestion, setChatQuestion] = useState('')
+  const [chatAnswer, setChatAnswer] = useState<string | null>(null)
+  const [isChatLoading, setIsChatLoading] = useState(false)
 
-  // Simulate real-time updates
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!chatQuestion.trim()) return
+
+    setIsChatLoading(true)
+    setChatAnswer(null)
+
+    try {
+      const sessionData = localStorage.getItem('agro-control-user')
+      if (!sessionData) return
+      const { token } = JSON.parse(sessionData)
+
+      const response = await fetch('http://localhost:4000/api/ia/chat', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ pregunta: chatQuestion, recomendaciones })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setChatAnswer(result.respuesta)
+      } else {
+        setChatAnswer('Error: No se pudo obtener respuesta del agrónomo virtual.')
+      }
+    } catch (err) {
+      setChatAnswer('Error de conexión con el asistente de IA.')
+    } finally {
+      setIsChatLoading(false)
+    }
+  }
+
+  // Cargar sugerencias agronómicas (reglas/Gemini) desde el Backend
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics((prev) =>
-        prev.map((metric) => {
-          const variation = (Math.random() - 0.5) * 4
-          let newValue = Math.max(0, Math.min(100, metric.value + variation))
-          
-          if (metric.label === 'Temperatura') {
-            newValue = Math.max(15, Math.min(35, metric.value + (Math.random() - 0.5) * 2))
-          }
+    const obtenerRecomendaciones = async () => {
+      try {
+        const sessionData = localStorage.getItem('agro-control-user')
+        if (!sessionData) return
+        const { token } = JSON.parse(sessionData)
 
-          let status: 'optimo' | 'alerta' | 'critico' = 'optimo'
-          if (metric.label === 'Humedad del Suelo') {
-            if (newValue < 30 || newValue > 80) status = 'critico'
-            else if (newValue < 40 || newValue > 70) status = 'alerta'
-          } else if (metric.label === 'Temperatura') {
-            if (newValue < 10 || newValue > 35) status = 'critico'
-            else if (newValue < 15 || newValue > 30) status = 'alerta'
-          } else {
-            if (newValue < 50) status = 'critico'
-            else if (newValue < 70) status = 'alerta'
-          }
-
-          return { ...metric, value: Math.round(newValue * 10) / 10, status }
+        const response = await fetch('http://localhost:4000/api/ia/recomendaciones', {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
-      )
-    }, 3000)
 
+        if (response.ok) {
+          const resultado = await response.json()
+          setRecommendations(resultado.data)
+        }
+      } catch (error) {
+        console.error("Error al obtener recomendaciones de la IA:", error)
+      }
+    }
+
+    obtenerRecomendaciones()
+    const interval = setInterval(obtenerRecomendaciones, 15000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Cargar parcelas reales desde la Base de Datos
+  useEffect(() => {
+    const obtenerParcelas = async () => {
+      try {
+        const sessionData = localStorage.getItem('agro-control-user')
+        if (!sessionData) return
+        const { token } = JSON.parse(sessionData)
+
+        const response = await fetch('http://localhost:4000/api/parcelas', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+
+        if (response.ok) {
+          const resultado = await response.json()
+          const parcelasReales = resultado.data.map((p: any) => ({
+            id: p.id,
+            name: p.nombre, 
+            cropType: p.cropType === 1 ? 'soya' : p.cropType === 2 ? 'maiz' : p.cropType === 3 ? 'trigo' : 'otros',
+            area: parseFloat(p.area),
+            soilStatus: 'optimo', 
+            createdAt: p.createdAt || new Date().toISOString() 
+          }))
+          setParcels(parcelasReales)
+        }
+      } catch (error) {
+        console.error("Error al cargar parcelas en el dashboard:", error)
+      }
+    }
+
+    obtenerParcelas()
+  }, [setParcels])
+
+  // Cargar sensores de la base de datos para calcular métricas promedio
+  useEffect(() => {
+    const obtenerSensores = async () => {
+      try {
+        const sessionData = localStorage.getItem('agro-control-user')
+        if (!sessionData) return
+        const { token } = JSON.parse(sessionData)
+
+        const response = await fetch('http://localhost:4000/api/sensores', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+
+        if (response.ok) {
+          const resultado = await response.json()
+          const readings = resultado.data
+
+          if (readings.length > 0) {
+            const humidities = readings.filter((s: any) => s.type === 'humidity')
+            const temperatures = readings.filter((s: any) => s.type === 'temperature')
+            
+            const avgHum = humidities.reduce((sum: number, s: any) => sum + s.value, 0) / (humidities.length || 1)
+            const avgTemp = temperatures.reduce((sum: number, s: any) => sum + s.value, 0) / (temperatures.length || 1)
+            
+            const optimos = readings.filter((s: any) => s.status === 'optimo').length
+            const healthIndex = (optimos / readings.length) * 100
+
+            // Determine status for averages
+            let humStatus: 'optimo' | 'alerta' | 'critico' = 'optimo'
+            if (avgHum < 30 || avgHum > 80) humStatus = 'critico'
+            else if (avgHum < 40 || avgHum > 70) humStatus = 'alerta'
+
+            let tempStatus: 'optimo' | 'alerta' | 'critico' = 'optimo'
+            if (avgTemp < 12 || avgTemp > 35) tempStatus = 'critico'
+            else if (avgTemp < 18 || avgTemp > 28) tempStatus = 'alerta'
+
+            let healthStatus: 'optimo' | 'alerta' | 'critico' = 'optimo'
+            if (healthIndex < 50) healthStatus = 'critico'
+            else if (healthIndex < 75) healthStatus = 'alerta'
+
+            setMetrics([
+              { label: 'Humedad del Suelo', value: Math.round(avgHum), unit: '%', icon: 'water_drop', status: humStatus },
+              { label: 'Temperatura', value: Math.round(avgTemp), unit: '°C', icon: 'thermostat', status: tempStatus },
+              { label: 'Índice de Salud', value: Math.round(healthIndex), unit: '%', icon: 'local_florist', status: healthStatus },
+              { label: 'Estado Sistema', value: 100, unit: '%', icon: 'memory', status: 'optimo' },
+            ])
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar sensores en el dashboard:", error)
+      }
+    }
+
+    obtenerSensores()
+    const interval = setInterval(obtenerSensores, 15000)
     return () => clearInterval(interval)
   }, [])
 
@@ -77,12 +202,6 @@ export function DashboardView() {
         }
     }
   }
-
-  const recommendations = [
-    { text: 'Riego programado para parcela norte en 2 horas', icon: 'water', priority: 'info' },
-    { text: 'Niveles de nitrógeno óptimos en todas las parcelas', icon: 'check_circle', priority: 'success' },
-    { text: 'Considere fertilización en parcela sur esta semana', icon: 'info', priority: 'warning' },
-  ]
 
   return (
     <div className="space-y-8">
@@ -241,6 +360,50 @@ export function DashboardView() {
                   <p className="text-sm text-on-surface leading-relaxed">{rec.text}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Agronomist Chat Console */}
+            <div className="mt-6 pt-5 border-t border-[var(--on-primary)]/10 space-y-4">
+              <h4 className="text-sm font-semibold text-on-surface flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[var(--tertiary)] text-base">forum</span>
+                Consultar al Agrónomo IA
+              </h4>
+              <p className="text-xs text-on-surface-variant leading-normal">
+                Hazle una pregunta técnica sobre estas recomendaciones o el estado de tus lotes.
+              </p>
+              
+              <form onSubmit={handleChatSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ej: ¿Cómo corrijo el pH de la Parcela 1?"
+                  value={chatQuestion}
+                  onChange={(e) => setChatQuestion(e.target.value)}
+                  className="flex-1 bg-surface-high border-0 h-10 px-3 rounded-lg text-sm focus:ring-1 focus:ring-[var(--tertiary)] text-on-surface placeholder:text-on-surface-variant/40"
+                  disabled={isChatLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={isChatLoading || !chatQuestion.trim()}
+                  className="bg-[var(--tertiary)] hover:bg-[var(--tertiary-fixed-dim)] text-[var(--on-tertiary-fixed)] font-semibold h-10 px-4 rounded-lg text-xs flex items-center justify-center transition-smooth disabled:opacity-50 border-0 cursor-pointer"
+                >
+                  {isChatLoading ? (
+                    <span className="material-symbols-outlined text-base animate-spin">sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-base">send</span>
+                  )}
+                </button>
+              </form>
+
+              {chatAnswer && (
+                <div className="bg-surface-low p-4 rounded-lg text-xs leading-relaxed text-on-surface shadow-inner border border-[var(--on-primary)]/5 relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <span className="absolute -top-2 left-4 w-4 h-4 bg-surface-low rotate-45 border-l border-t border-[var(--on-primary)]/5" />
+                  <p className="font-semibold text-[var(--tertiary)] mb-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">psychology</span>
+                    Respuesta del Asistente CIAT:
+                  </p>
+                  <p className="text-on-surface-variant font-medium whitespace-pre-line">{chatAnswer}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

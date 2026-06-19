@@ -66,6 +66,58 @@ export function MapView() {
     obtenerCultivos()
   }, [])
 
+  // Cargar las parcelas del usuario desde el Backend
+  useEffect(() => {
+    const obtenerParcelas = async () => {
+      try {
+        const sessionData = localStorage.getItem('agro-control-user')
+        if (!sessionData) return
+        const { token } = JSON.parse(sessionData)
+
+        const response = await fetch('http://localhost:4000/api/parcelas', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+
+        if (response.ok) {
+          const resultado = await response.json()
+          const parcelasReales = resultado.data.map((p: any) => {
+            let coords: any[] = []
+            if (p.geom) {
+              try {
+                const geomObj = typeof p.geom === 'string' ? JSON.parse(p.geom) : p.geom
+                if (geomObj && geomObj.coordinates && geomObj.coordinates[0]) {
+                  coords = geomObj.coordinates[0].map((coord: any) => ({
+                    lat: coord[1],
+                    lng: coord[0]
+                  }))
+                  if (coords.length > 1 && coords[0].lat === coords[coords.length - 1].lat && coords[0].lng === coords[coords.length - 1].lng) {
+                    coords.pop()
+                  }
+                }
+              } catch (e) {
+                console.error("Error parsing geom:", e)
+              }
+            }
+            return {
+              id: p.id,
+              name: p.nombre,
+              cropType: p.cropType,
+              ubicacion_nombre: p.ubicacion_nombre,
+              area: parseFloat(p.area),
+              coordinates: coords
+            }
+          })
+          setParcels(parcelasReales)
+        }
+      } catch (error) {
+        console.error("Error al cargar las parcelas:", error)
+      }
+    }
+
+    obtenerParcelas()
+  }, [])
+
+
   const calculateArea = (points: MapPoint[]): number => {
     if (points.length < 3) return 0
     let area = 0

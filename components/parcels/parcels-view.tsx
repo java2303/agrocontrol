@@ -59,15 +59,35 @@ export function ParcelsView() {
 
         if (response.ok) {
           const resultado = await response.json()
-          const parcelasReales = resultado.data.map((p: any) => ({
-            id: p.id,
-            name: p.nombre, 
-            cropType: p.cropType === 1 ? 'soya' : p.cropType === 2 ? 'maiz' : p.cropType === 3 ? 'trigo' : 'otros',
-            area: parseFloat(p.area),
-            soilStatus: 'optimo', 
-            coordinates: [], 
-            createdAt: new Date().toISOString() 
-          }))
+          const parcelasReales = resultado.data.map((p: any) => {
+            let coords: any[] = []
+            if (p.geom) {
+              try {
+                const geomObj = typeof p.geom === 'string' ? JSON.parse(p.geom) : p.geom
+                if (geomObj && geomObj.coordinates && geomObj.coordinates[0]) {
+                  coords = geomObj.coordinates[0].map((coord: any) => ({
+                    lat: coord[1],
+                    lng: coord[0]
+                  }))
+                  // Remove closing duplicate point from GeoJSON polygon if present
+                  if (coords.length > 1 && coords[0].lat === coords[coords.length - 1].lat && coords[0].lng === coords[coords.length - 1].lng) {
+                    coords.pop()
+                  }
+                }
+              } catch (e) {
+                console.error("Error parsing geom coordinates:", e)
+              }
+            }
+            return {
+              id: p.id,
+              name: p.nombre, 
+              cropType: p.cropType === 1 ? 'soya' : p.cropType === 2 ? 'maiz' : p.cropType === 3 ? 'trigo' : 'otros',
+              area: parseFloat(p.area),
+              soilStatus: 'optimo', 
+              coordinates: coords, 
+              createdAt: p.createdAt || new Date().toISOString() 
+            }
+          })
           setParcelas(parcelasReales)
         }
       } catch (error) {

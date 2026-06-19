@@ -69,7 +69,7 @@ export function MapComponent({
       
       <MapEvents />
 
-      {currentPoints.length > 0 && (
+      {currentPoints.length >= 3 && (
         <Polygon 
           positions={currentPoints.map(p => [p.lat, p.lng])} 
           pathOptions={{ color: '#b2d414', dashArray: '5, 5', fillColor: 'rgba(178, 212, 20, 0.25)' }} 
@@ -107,6 +107,10 @@ export function MapComponent({
       ))}
 
       {parcels.map((parcel) => {
+        if (!parcel.coordinates || parcel.coordinates.length < 3) {
+          return null
+        }
+
         const cultivoEncontrado = cultivos.find(
           (c) => c.tipo_cultivo_id.toString() === parcel.cropType?.toString()
         )

@@ -7,6 +7,9 @@ const db = require('./src/config/db');
 const authRoutes = require('./src/routes/authRoutes');
 const parcelasRoutes = require('./src/routes/parcelasRoutes');
 const cultivosRoutes = require('./src/routes/cultivosRoutes');
+const sensoresRoutes = require('./src/routes/sensoresRoutes');
+const iaRoutes = require('./src/routes/iaRoutes');
+const { startSimulator } = require('./src/services/sensorSimulator');
 const app = express();
 
 app.use(helmet());
@@ -16,6 +19,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/parcelas', parcelasRoutes);
 app.use('/api', cultivosRoutes);
+app.use('/api', sensoresRoutes);
+app.use('/api', iaRoutes);
 
 // --- Ruta de Prueba de Conexión ---
 app.get('/test-db', async (req, res) => {
@@ -38,4 +43,5 @@ app.get('/test-db', async (req, res) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor de Agro Control corriendo en puerto ${PORT}`);
+    startSimulator();
 });

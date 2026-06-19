@@ -62,74 +62,37 @@ export function SensorsView() {
   const [sensors, setSensors] = useState<SensorReading[]>([])
   const [selectedParcel, setSelectedParcel] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<string>('all')
+  const [cargando, setCargando] = useState(true)
 
-  // Initialize sensors for each parcel
+  // Cargar sensores desde el Backend (PostgreSQL) cada 15 segundos
   useEffect(() => {
-    const initialSensors: SensorReading[] = []
-    const parcels = state.parcels.length > 0 ? state.parcels : [
-      { id: 'demo-1', name: 'Parcela Demo Norte' },
-      { id: 'demo-2', name: 'Parcela Demo Sur' },
-      { id: 'demo-3', name: 'Parcela Demo Este' },
-    ]
+    const obtenerSensores = async () => {
+      try {
+        const sessionData = localStorage.getItem('agro-control-user')
+        if (!sessionData) return
+        const { token } = JSON.parse(sessionData)
 
-    parcels.forEach((parcel) => {
-      Object.keys(sensorConfig).forEach((type) => {
-        const config = sensorConfig[type as keyof typeof sensorConfig]
-        const baseValue = (config.optimal.min + config.optimal.max) / 2
-        const history = Array.from({ length: 10 }, () => 
-          baseValue + (Math.random() - 0.5) * (config.optimal.max - config.optimal.min)
-        )
-        
-        initialSensors.push({
-          id: `${parcel.id}-${type}`,
-          parcelId: parcel.id,
-          parcelName: parcel.name,
-          type: type as SensorReading['type'],
-          value: history[history.length - 1],
-          unit: config.unit,
-          status: 'optimo',
-          lastUpdate: new Date(),
-          history,
+        const response = await fetch('http://localhost:4000/api/sensores', {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
-      })
-    })
 
-    setSensors(initialSensors)
-  }, [state.parcels])
+        if (response.ok) {
+          const resultado = await response.json()
+          const lecturas = resultado.data.map((s: any) => ({
+            ...s,
+            lastUpdate: new Date(s.lastUpdate)
+          }))
+          setSensors(lecturas)
+        }
+      } catch (error) {
+        console.error("Error al cargar sensores:", error)
+      } finally {
+        setCargando(false)
+      }
+    }
 
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSensors((prev) =>
-        prev.map((sensor) => {
-          const config = sensorConfig[sensor.type]
-          const variation = (Math.random() - 0.5) * ((config.optimal.max - config.optimal.min) * 0.2)
-          let newValue = sensor.value + variation
-          
-          // Keep within bounds
-          newValue = Math.max(config.min, Math.min(config.max, newValue))
-          
-          // Determine status
-          let status: SensorReading['status'] = 'optimo'
-          if (newValue < config.warning.min || newValue > config.warning.max) {
-            status = 'critico'
-          } else if (newValue < config.optimal.min || newValue > config.optimal.max) {
-            status = 'alerta'
-          }
-
-          const newHistory = [...sensor.history.slice(1), newValue]
-
-          return {
-            ...sensor,
-            value: newValue,
-            status,
-            lastUpdate: new Date(),
-            history: newHistory,
-          }
-        })
-      )
-    }, 3000)
-
+    obtenerSensores()
+    const interval = setInterval(obtenerSensores, 15000)
     return () => clearInterval(interval)
   }, [])
 
@@ -196,6 +159,10 @@ export function SensorsView() {
         })}
       </div>
     )
+  }
+
+  if (cargando) {
+    return <div className="flex justify-center items-center h-64 text-on-surface-variant font-medium">Cargando sensores de la base de datos...</div>
   }
 
   return (
